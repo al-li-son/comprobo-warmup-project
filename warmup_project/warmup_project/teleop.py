@@ -29,10 +29,10 @@ class TeleopNode(Node):
             msg.angular.z = 0.0
         elif key == 'a':
             msg.linear.x = 0.0
-            msg.angular.z = 0.5
+            msg.angular.z = 0.8
         elif key == 'd':
             msg.linear.x = 0.0
-            msg.angular.z = -0.5
+            msg.angular.z = -0.8
         elif key == ' ':
             msg.linear.x = 0.0
             msg.angular.z = 0.0

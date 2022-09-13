@@ -21,19 +21,19 @@ class DriveSquareNode(Node):
             msg.angular.z= 0.0
         elif current_time - self.start_timestamp < 6.6e9:
             msg.linear.x = 0.0
-            msg.angular.z= 0.475
+            msg.angular.z= 0.5
         elif current_time - self.start_timestamp < 9.9e9:
             msg.linear.x = 0.3
             msg.angular.z= 0.0
         elif current_time - self.start_timestamp < 13.2e9:
             msg.linear.x = 0.0
-            msg.angular.z= 0.475
+            msg.angular.z= 0.5
         elif current_time - self.start_timestamp < 16.5e9:
             msg.linear.x = 0.3
             msg.angular.z= 0.0
         elif current_time - self.start_timestamp < 19.8e9:
             msg.linear.x = 0.0
-            msg.angular.z= 0.475
+            msg.angular.z= 0.5
         elif current_time - self.start_timestamp < 23.1e9:
             msg.linear.x = 0.3
             msg.angular.z= 0.0
