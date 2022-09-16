@@ -26,7 +26,7 @@ class PersonFollowerNode(Node):
         self.subscriber = self.create_subscription(LaserScan, 'scan', self.get_wall_error, 10)
         self.bump_subscriber = self.create_subscription(Bump, 'bump', self.hit_obstacle, 10)
         self.declare_parameters(namespace='',
-        parameters=[('Kp', 0.1)])
+        parameters=[('Kp', 0.5)])
         self.Kp = self.get_parameter('Kp').value
         # the following line is only need to support dynamic_reconfigure
         self.add_on_set_parameters_callback(self.parameter_callback)
@@ -52,12 +52,12 @@ class PersonFollowerNode(Node):
             move_msg.angular.z = 0.0
         else:
             move_msg.linear.x = .2
-            move_msg.angular.z = - self.Kp * self.wall_error
+            move_msg.angular.z = self.Kp * self.wall_error
         
         marker = Marker()
         marker.header.frame_id = "base_link"
         marker.header.stamp = self.get_clock().now().to_msg()
-        marker.ns = "my_namespace"
+        #marker.ns = "my_namespace"
         marker.id = 0
 
         marker.type = Marker.SPHERE
@@ -94,18 +94,21 @@ class PersonFollowerNode(Node):
             else:
                 x += 1
 
-        x_coords = np.multiply(scans, np.cos(np.multiply(ranges,(np.pi/180))))
-        y_coords = np.multiply(scans, np.sin(np.multiply(ranges,(np.pi/180))))
-        self.x_avg = np.average(x_coords)
-        self.y_avg = np.average(y_coords)
+        if len(scans) > 0:
+            x_coords = np.multiply(scans, np.cos(np.multiply(ranges,(np.pi/180))))
+            y_coords = np.multiply(scans, np.sin(np.multiply(ranges,(np.pi/180))))
+            self.x_avg = np.average(x_coords)
+            self.y_avg = np.average(y_coords)
 
-        rho = np.sqrt(self.x_avg**2 + self.y_avg**2)
-        phi = np.arctan2(self.y_avg, self.x_avg)
+            rho = np.sqrt(self.x_avg**2 + self.y_avg**2)
+            phi = np.arctan2(self.y_avg, self.x_avg)
 
-        if phi <= 180:
-            self.wall_error = phi
+            if phi <= 180:
+                self.wall_error = phi
+            else:
+                self.wall_error = -(360-phi)
         else:
-            self.wall_error = -(360-phi)
+            self.wall_error = 0.0
 
 def main(args=None):
     rclpy.init(args=args)
