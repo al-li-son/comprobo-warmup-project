@@ -1,4 +1,4 @@
-"""Drive Neato in a square"""
+"""Follow the wall with a Neato"""
 
 import rclpy
 import numpy as np

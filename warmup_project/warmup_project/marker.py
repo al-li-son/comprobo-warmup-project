@@ -10,7 +10,7 @@ class SimpleVisualizationPublisher(Node):
         self.vis_pub = self.create_publisher(Marker, 'marker', 10)
 
         timer_period = 0.1 # seconds
-        self.timer = self.create_timer(timer_period, self.publish_marker)
+        2
     
     def publish_marker(self):
         marker = Marker()
