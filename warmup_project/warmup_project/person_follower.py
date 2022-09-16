@@ -1,4 +1,4 @@
-"""Follow a perosn wiht the Neato"""
+"""Follow a perosn with the Neato"""
 
 import rclpy
 import numpy as np
@@ -6,7 +6,6 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from neato2_interfaces.msg import Bump
 from geometry_msgs.msg import Twist # To control Neato motors
-from statistics import mean
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
 from visualization_msgs.msg import Marker
@@ -18,6 +17,7 @@ class PersonFollowerNode(Node):
         self.wall_error = 0.0
         self.x_avg = 0.0
         self.y_avg = 0.0
+        self.distance = 0.0
         self.collision = False
         timer_period = 0.1
         self.timer = self.create_timer(timer_period, self.drive_msg)
@@ -51,7 +51,10 @@ class PersonFollowerNode(Node):
             move_msg.linear.x = 0.0
             move_msg.angular.z = 0.0
         else:
-            move_msg.linear.x = .2
+            if self.distance < 2:
+                move_msg.linear.x = .3 * self.distance
+            else:
+                move_msg.linear.x = .2
             move_msg.angular.z = self.Kp * self.wall_error
         
         marker = Marker()
@@ -88,7 +91,7 @@ class PersonFollowerNode(Node):
         x = 0
 
         while x < len(scans):
-            if scans[x] > 1.5 or scans[x] <= 0:
+            if scans[x] > 0.75 or scans[x] <= 0:
                 scans = np.delete(scans,x)
                 ranges = np.delete(ranges,x)
             else:
@@ -100,7 +103,7 @@ class PersonFollowerNode(Node):
             self.x_avg = np.average(x_coords)
             self.y_avg = np.average(y_coords)
 
-            rho = np.sqrt(self.x_avg**2 + self.y_avg**2)
+            self.distance = np.sqrt(self.x_avg**2 + self.y_avg**2)
             phi = np.arctan2(self.y_avg, self.x_avg)
 
             if phi <= 180:

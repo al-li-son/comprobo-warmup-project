@@ -23,6 +23,7 @@ setup(
             'teleop = warmup_project.teleop:main',
             'person_follower = warmup_project.person_follower:main',
             'wall_follower = warmup_project.wall_follower:main',
+            'obstacle_avoider = warmup_project.obstacle_avoider:main',
             'drive_square = warmup_project.drive_square:main',
             'marker = warmup_project.marker:main',
             'publisher = warmup_project.publisher:main',
