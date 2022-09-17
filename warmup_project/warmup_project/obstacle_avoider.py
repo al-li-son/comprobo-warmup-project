@@ -1,5 +1,6 @@
 """Avoid obstacles with the Neato"""
 
+from cmath import nan
 import rclpy
 import numpy as np
 from rclpy.node import Node
@@ -9,12 +10,14 @@ from geometry_msgs.msg import Twist # To control Neato motors
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
 from visualization_msgs.msg import Marker
+from scipy.stats import norm
+import matplotlib.pyplot as plt
 
 class ObstacleAvoiderNode(Node):
     def __init__(self):
         super().__init__('person_follower_node')
 
-        self.wall_error = 0.0
+        self.error = 0.0
         self.x_avg = 0.0
         self.y_avg = 0.0
         self.collision = False
@@ -49,12 +52,23 @@ class ObstacleAvoiderNode(Node):
             move_msg.linear.x = 0.0
             move_msg.angular.z = 0.0
         else:
-            pass
+            move_msg.linear.x = 0.2
+            move_msg.angular.z = self.Kp * self.error
         
         self.publisher.publish(move_msg)
 
     def get_turn_direction(self, msg):
-        pass
+        scans = np.array([val if not np.isinf(val) else nan for val in msg.ranges])
+        angles = np.linspace(-3,3,181)
+        weights = norm.pdf(angles, loc=0, scale=1)
+        scans_cropped = np.concatenate((np.flip(scans[0:91]), np.flip(scans[270:360])))
+        scans_max = max(scans_cropped)
+        scans_normalized= [val/scans_max if not np.isnan(val) else 1 for val in scans_cropped]
+        scans_inverted = [val - 1 for val in scans_normalized]
+        scans_scaled = weights + np.array(scans_inverted)
+        turn_angle = np.argmax(scans_scaled)
+        self.error = 90 - turn_angle
+
 
 def main(args=None):
     rclpy.init(args=args)
