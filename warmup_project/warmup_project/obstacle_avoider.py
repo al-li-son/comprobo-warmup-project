@@ -21,13 +21,19 @@ class ObstacleAvoiderNode(Node):
         self.x_avg = 0.0
         self.y_avg = 0.0
         self.collision = False
+
+        # Create timer
         timer_period = 0.1
         self.timer = self.create_timer(timer_period, self.drive_msg)
+
+        # Create publishers/subscribers
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
         self.subscriber = self.create_subscription(LaserScan, 'scan', self.get_turn_direction, 10)
         self.bump_subscriber = self.create_subscription(Bump, 'bump', self.hit_obstacle, 10)
+
+        # Make Kp adjustable through ROS args
         self.declare_parameters(namespace='',
-        parameters=[('Kp', 0.5)])
+        parameters=[('Kp', 0.05)])
         self.Kp = self.get_parameter('Kp').value
         # the following line is only need to support dynamic_reconfigure
         self.add_on_set_parameters_callback(self.parameter_callback)
@@ -43,14 +49,21 @@ class ObstacleAvoiderNode(Node):
         return SetParametersResult(successful=True)
     
     def hit_obstacle(self, msg):
-        #if not self.collision:
-            self.collision = msg.left_front or msg.left_side or msg.right_front or msg.right_side
+        """
+        Check if the Neato has collided with an obstacle
+        """       
+        self.collision = msg.left_front or msg.left_side or msg.right_front or msg.right_side
     
     def drive_msg(self):
+        """
+        Publish linear and angular velocities to robot
+        """
         move_msg = Twist()
+        # Stop moving if the robot has hit an obstacle
         if self.collision:
             move_msg.linear.x = 0.0
             move_msg.angular.z = 0.0
+        # Move forward constantly, turn based on calculated error to ideal heading
         else:
             move_msg.linear.x = 0.2
             move_msg.angular.z = self.Kp * self.error
@@ -58,15 +71,24 @@ class ObstacleAvoiderNode(Node):
         self.publisher.publish(move_msg)
 
     def get_turn_direction(self, msg):
-        scans = np.array([val if not np.isinf(val) else nan for val in msg.ranges])
+        """
+        Determine most favorable robot heading direction based on LIDAR scans.
+        Most favorable is the heading with the clearest path forward (no obstacles).
+        """
+        # Get scans and replace inf with max range (5)
+        scans = np.array([val if not np.isinf(val) else 5.0 for val in msg.ranges])
+        # Create a normal curve with 181 points (for 0-180 degrees), going out to 3 sigma
         angles = np.linspace(-3,3,181)
         weights = norm.pdf(angles, loc=0, scale=1)
+        # Get the scans 180 degrees in front of the robot (90-0 + 359-270 in Neato coordinate system)
         scans_cropped = np.concatenate((np.flip(scans[0:91]), np.flip(scans[270:360])))
+        # Scale data by dividing by max then -1 to make close scans weighted negatively
         scans_max = max(scans_cropped)
-        scans_normalized= [val/scans_max if not np.isnan(val) else 1 for val in scans_cropped]
-        scans_inverted = [val - 1 for val in scans_normalized]
-        scans_scaled = weights + np.array(scans_inverted)
+        scans_normalized= [val/scans_max - 1 for val in scans_cropped]
+        # Add scans data to normal curve to determine most favorable heading angle (index of array max)
+        scans_scaled = weights + np.array(scans_normalized)
         turn_angle = np.argmax(scans_scaled)
+        # 90 is target heading
         self.error = 90 - turn_angle
 
 

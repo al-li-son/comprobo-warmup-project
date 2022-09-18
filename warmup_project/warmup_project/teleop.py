@@ -1,26 +1,30 @@
 """Teleop node to drive a Neato with a keyboard"""
 
 import rclpy
-from rclpy.node import Node
-from geometry_msgs.msg import Twist
-
 import tty
 import select
 import sys
 import termios
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
 
 class TeleopNode(Node):
     def __init__(self):
         super().__init__('teleop_node')
 
+        # Create timer to set velocity based on key
         timer_period = 0.1
         self.timer = self.create_timer(timer_period, self.set_vel)
+
+        # Create publishers/subscribers
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
     
     def set_vel(self):
+        # Get current key
         key = self.getKey()  
         msg = Twist()
         
+        # Control based on WASD + spacebar
         if key == 'w':
             msg.linear.x = 0.3
             msg.angular.z = 0.0
@@ -36,6 +40,7 @@ class TeleopNode(Node):
         elif key == ' ':
             msg.linear.x = 0.0
             msg.angular.z = 0.0
+        # Exit if ctrl+C pressed
         elif key == '\x03':
             self.destroy_node()
         
