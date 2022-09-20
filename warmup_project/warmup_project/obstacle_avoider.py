@@ -33,7 +33,7 @@ class ObstacleAvoiderNode(Node):
 
         # Make Kp adjustable through ROS args
         self.declare_parameters(namespace='',
-        parameters=[('Kp', 0.05)])
+        parameters=[('Kp', 0.1)])
         self.Kp = self.get_parameter('Kp').value
         # the following line is only need to support dynamic_reconfigure
         self.add_on_set_parameters_callback(self.parameter_callback)
@@ -66,7 +66,12 @@ class ObstacleAvoiderNode(Node):
         # Move forward constantly, turn based on calculated error to ideal heading
         else:
             move_msg.linear.x = 0.2
-            move_msg.angular.z = self.Kp * self.error
+            if self.error > 2:
+                move_msg.angular.z = self.Kp * (self.error + 8)
+            elif self.error < -2:
+                move_msg.angular.z = self.Kp * (self.error - 8)
+            else:
+                move_msg.angular.z = self.Kp * self.error
         
         self.publisher.publish(move_msg)
 
@@ -76,17 +81,23 @@ class ObstacleAvoiderNode(Node):
         Most favorable is the heading with the clearest path forward (no obstacles).
         """
         # Get scans and replace inf with max range (5)
-        scans = np.array([val if not np.isinf(val) else 5.0 for val in msg.ranges])
+        scans = np.array([val if (not np.isinf(val)) and val > 0.0 else np.nan for val in msg.ranges])
         # Create a normal curve with 181 points (for 0-180 degrees), going out to 3 sigma
         angles = np.linspace(-3,3,181)
         weights = norm.pdf(angles, loc=0, scale=1)
         # Get the scans 180 degrees in front of the robot (90-0 + 359-270 in Neato coordinate system)
         scans_cropped = np.concatenate((np.flip(scans[0:91]), np.flip(scans[270:360])))
-        # Scale data by dividing by max then -1 to make close scans weighted negatively
-        scans_max = max(scans_cropped)
-        scans_normalized= [val/scans_max - 1 for val in scans_cropped]
+        # Scale data by dividing by max
+        scans_max = np.nanmax(scans_cropped)
+        print(f"{scans_max=}")
+        scans_normalized= [val/scans_max if not np.isnan(val) else 1.0 for val in scans_cropped]
+        print(f"{scans_normalized}")
+        scans_normalized = np.concatenate(([scans_normalized[0], scans_normalized[0]], scans_normalized, [scans_normalized[-1], scans_normalized[-1]]))
+        scans_smoothed = []
+        for i in range(2, len(scans_normalized)-2):
+            scans_smoothed.append(np.mean(scans_normalized[i-2:i+2]))
         # Add scans data to normal curve to determine most favorable heading angle (index of array max)
-        scans_scaled = weights + np.array(scans_normalized)
+        scans_scaled = weights + np.array(scans_smoothed)
         turn_angle = np.argmax(scans_scaled)
         # 90 is target heading
         self.error = 90 - turn_angle

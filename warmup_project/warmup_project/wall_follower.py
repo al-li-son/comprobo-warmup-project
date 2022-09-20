@@ -28,7 +28,7 @@ class WallFollowerNode(Node):
 
         # Allow Kp to be adjusted via ROS args
         self.declare_parameters(namespace='',
-        parameters=[('Kp', 0.5)])
+        parameters=[('Kp', 0.3)])
         self.Kp = self.get_parameter('Kp').value
         # the following line is only need to support dynamic_reconfigure
         self.add_on_set_parameters_callback(self.parameter_callback)
@@ -64,7 +64,7 @@ class WallFollowerNode(Node):
         # Constant linear speed with proportional control on angular velocity
         else:
             msg.linear.x = .2
-            msg.angular.z = - self.Kp * self.wall_error
+            msg.angular.z = self.Kp * self.wall_error
         # Publish to cmd_vel topic
         self.publisher.publish(msg)
 
@@ -93,7 +93,7 @@ class WallFollowerNode(Node):
 
         # Calculates difference between front and back (parallelism)
         # Chooses to follow left or right wall based on closest wall
-        self.wall_error = right_front_mean - right_back_mean if right_mean < left_mean else left_back_mean - left_front_mean
+        self.wall_error = right_back_mean - right_front_mean if right_mean < left_mean else left_front_mean - left_back_mean
 
         print(f"{right_front_mean=}\n{right_back_mean=}\n{left_front_mean=}\n{left_back_mean=}")
 

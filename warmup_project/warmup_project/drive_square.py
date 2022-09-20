@@ -9,37 +9,33 @@ class DriveSquareNode(Node):
         super().__init__('drive_square_node')
 
         timer_period = 0.1
-        self.start_timestamp = self.get_clock().now().nanoseconds
+        self.last_timestamp = self.get_clock().now().nanoseconds
+        self.is_turning = False
+        self.counter = 0
         self.timer = self.create_timer(timer_period, self.drive_msg)
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
     
     def drive_msg(self):
         msg = Twist()
         current_time = self.get_clock().now().nanoseconds
-        if current_time - self.start_timestamp < 3.3e9:
-            msg.linear.x = 0.3
-            msg.angular.z= 0.0
-        elif current_time - self.start_timestamp < 6.6e9:
+        if self.counter >= 4:
             msg.linear.x = 0.0
-            msg.angular.z= 0.5
-        elif current_time - self.start_timestamp < 9.9e9:
-            msg.linear.x = 0.3
-            msg.angular.z= 0.0
-        elif current_time - self.start_timestamp < 13.2e9:
-            msg.linear.x = 0.0
-            msg.angular.z= 0.5
-        elif current_time - self.start_timestamp < 16.5e9:
-            msg.linear.x = 0.3
-            msg.angular.z= 0.0
-        elif current_time - self.start_timestamp < 19.8e9:
-            msg.linear.x = 0.0
-            msg.angular.z= 0.5
-        elif current_time - self.start_timestamp < 23.1e9:
-            msg.linear.x = 0.3
-            msg.angular.z= 0.0
-        elif current_time - self.start_timestamp < 26.4e9:
-            msg.linear.x = 0.0
-            msg.angular.z= 0.0
+            msg.angular.z = 0.0
+        elif self.is_turning:
+            if current_time - self.last_timestamp < 3.0e9:
+                msg.linear.x = 0.0
+                msg.angular.z = 0.6
+            else:
+                self.is_turning = False
+                self.last_timestamp = current_time
+        else:
+            if current_time - self.last_timestamp < 3.33e9:
+                msg.linear.x = 0.3
+                msg.angular.z = 0.0
+            else:
+                self.is_turning = True
+                self.last_timestamp = current_time
+                self.counter += 1
 
         self.publisher.publish(msg)
 
