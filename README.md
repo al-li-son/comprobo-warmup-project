@@ -37,12 +37,11 @@ https://user-images.githubusercontent.com/86380596/191907693-d2825eb1-d5dd-496a-
 ### Strategy 
 First, we used the built in lidar sensor to find the distance from the right and left side of the robot to the wall. Then, we compared the distances to find the closer wall. This is the wall that we will follow. Then, based on which wall we were following, we found the distance to the wall 45 degrees ahead and behind the robot. If the robot is parallel to the wall, these distances will be equal. If the distances are not equal, the robot is not parallel and can self correct using the difference between the two distances. The robot drives at a constant speed while correcting its angle to stay parallel to the wall. 
 
-<img width="362" alt="picture 1" src="https://user-images.githubusercontent.com/86380596/191909027-db3600ad-0b0f-42cc-8ca1-ecba62295935.PNG">
+![Diagram of LiDAR sensor detection angles for wall following](./media/wall_follower_1.png)
 
 Figure 1. Measurements from the Neato LiDAR sensor used for wall following. For each measurement, a 20 degree range (± 10 degrees) of data points was recorded for redundancy, filtered to remove dropped scans (0s), and averaged.
 
-<img width="393" alt="picture 2" src="https://user-images.githubusercontent.com/86380596/191909230-9f08ae24-f7a5-459e-bc5b-f47200d818e8.PNG">
-
+![Diagram of wall following behavior given a tilted wall on the right of the robot](./media/wall_follower_2.png)
 
 Figure 2. Wall following logic diagram. The robot chooses which wall to follow based on whether a directly left or right scan is closest, then compares the front and back measurements to determine which direction to turn to orient itself parallel to the wall.
 ### Code Structure
@@ -57,7 +56,7 @@ https://user-images.githubusercontent.com/86380596/191907636-2dbf37b8-77f4-442b-
 ### Strategy
 For this behavior, we assume that the robot is an empty space aside from the target. That means there are no nearby walls or obstacles. First, we take the entire LIDAR scan and filter it to remove all points outside a given radius. We used a radius of .75 meters because it seemed like a good balance. Then, we found the mean of the points present in the filtered data. This assumes that all points come from the same target, so it is not robust to multiple targets. After finding the mean of the data, or the centroid of the target, we calculated the angle between the target and the robots current heading. Then, we turned the robot toward the heading while driving at a constant velocity. One primary limitation of this strategy is that the robot can not handle multiple targets. If there are multiple targets, it will still try to find the mean of the targets and end up with a point in between. 
 
-<img width="269" alt="picture 3" src="https://user-images.githubusercontent.com/86380596/191909569-46025231-ca59-44f4-ba12-bad20dc64449.PNG">
+![Diagram of detecting a person using the Neato LiDAR sensor](./media/person_follower_1.png)
 
 Figure 3. Person following logic diagram. The robot only considers points within a 0.75m radius. It then finds the mean point, or centroid, of all points within range, determines the angle between the robot’s current heading and the centroid, and turns to follow accordingly.
 ### Code Structure
@@ -73,7 +72,7 @@ https://user-images.githubusercontent.com/86380596/191907565-7591b894-b06c-45f6-
 ### Strategy
 For this behavior, we restricted the LIDAR scan to just 180 degrees at the front of the robot. This means it is unable to see behind itself.  We want the robot to drive in a straight line but also avoid any obstacles it sees. To do this we created a curve representing the desired heading. For our purposes, we created a normal curve spanning -90 to 90 degrees with a peak at 0 degrees (representing straight ahead). The height of each point corresponded to how desired that heading was: straight ahead was most desired and either side was least desired.  Then, we processed the LIDAR data in a similar way. We created a vector with all the points where values farther away were higher and therefore more desired and values closer were lower and therefore less desired. Then we used elementwise addition to add the two arrays and come up with a final array representing the desirability of each direction. At this point, we used a moving average to smooth out the curve and found the maximum and turned the robot towards that point while moving. 
 
-<img width="468" alt="picture 4" src="https://user-images.githubusercontent.com/86380596/191909804-8a3e85d0-edf2-4f50-a3cf-d3f0ed809979.PNG">
+![Diagram of detecting an obstacle with the LiDAR](./media/obstacle_avoider_1.png) ![Diagram of logic to control robot heading based on LiDAR scans](./media/obstacle_avoider_2.png)
 
 Figure 4. Obstacle avoiding example situation and logic. Since large scan values indicate objects further away, a 180° LiDAR scan range (-90° and 90° from the forward heading of the robot) is added to a normal curve and the maximum is taken as the desired angle that the robot should turn towards. Using the normal curve causes the robot to favor moving directly forwards when scans are large in multiple directions. To center the robot within gaps between obstacles, a moving average filter is applied over the scan data to smooth sharp edges.
 ### Code Structure
@@ -89,7 +88,7 @@ https://user-images.githubusercontent.com/86380596/191907441-56763522-a6b9-4c72-
 ### Strategy
 The robot begins in the default person following behavior where it locates a person and drives towards them. When the robot reaches the person and triggers its bump sensor, it switches to its second state. In the second state, the robot reverses slightly to clear the person and then spins rapidly. The robot remains in this state until its bump sensor is triggered again and then it switches back to its first state where it person-follows. 
 
-<img width="428" alt="picture 5" src="https://user-images.githubusercontent.com/86380596/191910014-582a4d81-6842-49a5-9a48-b34ad9b7f645.PNG">
+![Diagram of finite state machine](./media/state_machine_1.png)
 
 Figure 5. Finite state diagram for a Neato controller. The Neato will default to person following behavior, but when a bump sensor is activated it will reverse and spin around until a bump sensor is activated again, at which point it will return to person following behavior.
 ### Code Structure
