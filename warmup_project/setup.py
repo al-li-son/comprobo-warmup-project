@@ -26,9 +26,7 @@ setup(
             'obstacle_avoider = warmup_project.obstacle_avoider:main',
             'finite_state_controller = warmup_project.finite_state_controller:main',
             'drive_square = warmup_project.drive_square:main',
-            'marker = warmup_project.marker:main',
-            'publisher = warmup_project.publisher:main',
-            'subscriber = warmup_project.subscriber:main'
+            'marker = warmup_project.marker:main'
         ],
     },
 )

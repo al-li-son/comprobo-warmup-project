@@ -20,6 +20,9 @@ class TeleopNode(Node):
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
     
     def set_vel(self):
+        """
+        Publish linear and angular velocity to robot
+        """
         # Get current key
         key = self.getKey()  
         msg = Twist()
@@ -47,6 +50,9 @@ class TeleopNode(Node):
         self.publisher.publish(msg)
     
     def getKey(self):
+        """
+        Get most recent key press
+        """
         settings = termios.tcgetattr(sys.stdin)
         tty.setraw(sys.stdin.fileno())
         select.select([sys.stdin], [], [], 0)

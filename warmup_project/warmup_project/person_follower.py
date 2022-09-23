@@ -91,7 +91,7 @@ class PersonFollowerNode(Node):
         marker.scale.x = 0.1
         marker.scale.y = 0.1
         marker.scale.z = 0.1
-        marker.color.a = 1.0 # Don't forget to set the alpha!
+        marker.color.a = 1.0
         marker.color.r = 0.0
         marker.color.g = 1.0
         marker.color.b = 0.0
@@ -100,6 +100,10 @@ class PersonFollowerNode(Node):
         self.vis_pub.publish(marker)
 
     def get_obstacle_error(self, msg):
+        """
+        Determine the position of the person relative to the Neato.
+        Finds centroid of LiDAR scans within 0.75m range of the robot.
+        """
         scans = np.array(msg.ranges)
         ranges = np.array(range(361))
         x = 0
@@ -119,7 +123,7 @@ class PersonFollowerNode(Node):
             # Average coordinates to find centroid position of person
             self.x_avg = np.average(x_coords)
             self.y_avg = np.average(y_coords)
-            # Calculate distance & angle from robot +x to person
+            # Calculate distance & angle from robot to person
             self.distance = np.sqrt(self.x_avg**2 + self.y_avg**2)
             phi = np.arctan2(self.y_avg, self.x_avg)
 

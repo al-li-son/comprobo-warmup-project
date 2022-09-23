@@ -64,7 +64,7 @@ class StateMachineNode(Node):
     
     def run_loop(self):
         """
-        Publish linear and angular velocities to robot
+        Choose run function to call based on state.
         """
         if self.state == State.PERSON_FOLLOW:
             self.person_follow()
@@ -72,15 +72,21 @@ class StateMachineNode(Node):
             self.spin()
 
     def person_follow(self):
+        """
+        Run loop function for person following state
+        """
         move_msg = Twist()
+        # Enter state
         if self.last_state == State.SPIN:
             move_msg.linear.x = -0.2
             move_msg.angular.x = 0.0
             self.collision = False
             self.last_state = State.PERSON_FOLLOW
             self.publisher.publish(move_msg)  
+        # Exit state
         elif self.collision:
             self.state = State.SPIN
+        # Run state
         else:
             # Turn without moving forward until the person is in front of the robot
             if abs(self.error) > 0.5:
@@ -93,7 +99,11 @@ class StateMachineNode(Node):
             self.publisher.publish(move_msg)   
 
     def spin(self):
+        """
+        Run loop function for spinning state
+        """
         move_msg = Twist()
+        # Enter state
         if self.last_state == State.PERSON_FOLLOW:
             self.collision = False
             self.counter = 0
@@ -101,8 +111,10 @@ class StateMachineNode(Node):
             move_msg.linear.x = -0.3
             move_msg.angular.z = 0.0
             self.publisher.publish(move_msg)
+        # Exit state
         elif self.collision:
             self.state = State.PERSON_FOLLOW
+        # Run state
         else:
             if self.counter < 10:
                 move_msg.linear.x = -0.3
@@ -115,10 +127,17 @@ class StateMachineNode(Node):
 
 
     def get_error(self, msg):
+        """
+        Get error for angular velocity control depending on state.
+        Made to be robust if more states were to be added.
+        """
         if self.state == State.PERSON_FOLLOW:
             self.get_person_error(msg)
 
     def get_person_error(self, msg):
+        """
+        Get error between current robot heading and position of person.
+        """
         scans = np.array(msg.ranges)
         ranges = np.array(range(361))
         x = 0
