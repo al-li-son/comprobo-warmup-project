@@ -43,7 +43,8 @@ Figure 1. Measurements from the Neato LiDAR sensor used for wall following. For 
 
 ![Diagram of wall following behavior given a tilted wall on the right of the robot](./media/wall_follower_2.png)
 
-Figure 2. Wall following logic diagram. The robot chooses which wall to follow based on whether a directly left or right scan is closest, then compares the front and back measurements to determine which direction to turn to orient itself parallel to the wall.
+**Figure 2.** Wall following logic diagram. The robot chooses which wall to follow based on whether a directly left or right scan is closest, then compares the front and back measurements to determine which direction to turn to orient itself parallel to the wall.
+
 ### Code Structure
 The wall_follower.py file contains a WallFollowerNode class which houses the logic for the wall following behavior. The WallFollowerNode has a publisher that publishes to the /cmd_vel topic to control the movement of the robot and a subscriber that subscribes to the /scan topic to retrieve the distance data from the lidar sensor. We also incorporated a parameter to allow the user to change the value of the proportional controller from the command line. This value affects the speed at which the robot turns to self-correct when it is not parallel to the wall. Finally, we also incorporated a marker to visualize the position of the wall in rvis. 
 
@@ -58,7 +59,7 @@ For this behavior, we assume that the robot is an empty space aside from the tar
 
 ![Diagram of detecting a person using the Neato LiDAR sensor](./media/person_follower_1.png)
 
-Figure 3. Person following logic diagram. The robot only considers points within a 0.75m radius. It then finds the mean point, or centroid, of all points within range, determines the angle between the robot’s current heading and the centroid, and turns to follow accordingly.
+**Figure 3.** Person following logic diagram. The robot only considers points within a 0.75m radius. It then finds the mean point, or centroid, of all points within range, determines the angle between the robot’s current heading and the centroid, and turns to follow accordingly.
 ### Code Structure
 The person_follower.py file contains a PersonFollowerNode class which houses the logic for the person following behavior. The PersonFollowerNode has a publisher that publishes to the /cmd_vel topic to control the movement of the robot and a subscriber that subscribes to the /scan topic to retrieve the distance data from the lidar sensor. We also incorporated a parameter to allow the user to change the value of the proportional controller from the command line. This value affects the speed at which the robot turns towards the person. Finally, we also incorporated a marker to visualize the position of the person in rvis. This marker was especially helpful at visualizing when the robot picked up multiple targets.
 
@@ -74,7 +75,7 @@ For this behavior, we restricted the LIDAR scan to just 180 degrees at the front
 
 ![Diagram of detecting an obstacle with the LiDAR](./media/obstacle_avoider_1.png) ![Diagram of logic to control robot heading based on LiDAR scans](./media/obstacle_avoider_2.png)
 
-Figure 4. Obstacle avoiding example situation and logic. Since large scan values indicate objects further away, a 180° LiDAR scan range (-90° and 90° from the forward heading of the robot) is added to a normal curve and the maximum is taken as the desired angle that the robot should turn towards. Using the normal curve causes the robot to favor moving directly forwards when scans are large in multiple directions. To center the robot within gaps between obstacles, a moving average filter is applied over the scan data to smooth sharp edges.
+**Figure 4.** Obstacle avoiding example situation and logic. Since large scan values indicate objects further away, a 180° LiDAR scan range (-90° and 90° from the forward heading of the robot) is added to a normal curve and the maximum is taken as the desired angle that the robot should turn towards. Using the normal curve causes the robot to favor moving directly forwards when scans are large in multiple directions. To center the robot within gaps between obstacles, a moving average filter is applied over the scan data to smooth sharp edges.
 ### Code Structure
 The obstacle_avoider.py file contains a ObstacleAvoiderNode class which houses the logic for the obstacle avoidance behavior. The ObstacleAvoiderNode has a publisher that publishes to the /cmd_vel topic to control the movement of the robot and a subscriber that subscribes to the /scan topic to retrieve the distance data from the lidar sensor. We also incorporated a parameter to allow the user to change the value of the proportional controller from the command line. This value affects the speed at which the robot turns towards the person. Finally, we also incorporated a marker to visualize the position of the person in rvis. We decided not to implement a marker with this behavior. 
 
@@ -90,7 +91,7 @@ The robot begins in the default person following behavior where it locates a per
 
 ![Diagram of finite state machine](./media/state_machine_1.png)
 
-Figure 5. Finite state diagram for a Neato controller. The Neato will default to person following behavior, but when a bump sensor is activated it will reverse and spin around until a bump sensor is activated again, at which point it will return to person following behavior.
+**Figure 5.** Finite state diagram for a Neato controller. The Neato will default to person following behavior, but when a bump sensor is activated it will reverse and spin around until a bump sensor is activated again, at which point it will return to person following behavior.
 ### Code Structure
 The finite_state_controller.py file contains both a State class which in an enum that contains the names of states and a StateMachineNode class which houses the logic for the finite state machine. The code switches the same person-following code as earlier and code commanding the robot to reverse slightly and spin.
 
