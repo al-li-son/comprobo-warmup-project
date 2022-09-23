@@ -10,7 +10,7 @@ The goal of this warmup project is to gain familiarity with both ROS2 and the Ne
 ### Description
 Our goal with teleop was to be able to remotely control the movement of the Neato through the computer keyboard. 
 
-https://user-images.githubusercontent.com/86380596/191907234-733bdc6d-feec-4b0f-b658-50dbd7c995b6.mp4
+[Teleop Video](https://www.youtube.com/watch?v=lRWGTZljlB0&list=PLevadX1p2DCKCYBexXZQfXzgTRgTTkuP5&index=6)
 
 ### Strategy
 We chose to use the WASD keys and SPACE on the computer as those are movement keys that many people are already familiar with. The W key moves the robot forward, A and D turn, and S moves the robot backwards. Pressing SPACE stops the robot. Unfortunately, this means that the robot is only able to move or turn, it is not able to turn while driving. We chose to implement it this way for the sake of simplicity, but if we had more time, it would be good to implement more complex controls that allowed the robot to both turn and move at once. 
@@ -21,7 +21,7 @@ The teleop.py file contains a TeleopNode class which houses the logic for the te
 ### Description
 Our goal was to drive the robot in a 1 meter square. We tried to be as precise as possible with our distances and angles to make it as repeatable as possible. 
 
-https://user-images.githubusercontent.com/86380596/191907775-92bd7fa7-cf82-4eba-b948-331ded9d0a6e.mp4
+[Drive Square Video](https://www.youtube.com/watch?v=aLiW3HXQldc&list=PLevadX1p2DCKCYBexXZQfXzgTRgTTkuP5&index=1)
 
 ### Strategy
 For this behavior, we used a timer and then had the robot alternate between driving or turning for a set amount of time. The velocity input into the robot is already in meters per second, so it is not hard to calculate how long a robot must drive at any given velocity to travel 1 meter. In our case, our robot drove at .3 m/s so it drove for approximately 3.3 seconds. The angular velocity is in radians per second, so it is also easy to calculate the appropriate amount of time based on a given angular velocity. We used an angular velocity of 0.6 with a time period of 3 seconds. One limitation of this strategy is that it relies on a timer without any sensor feedback. This means if the robot's wheels slip on loose terrain causing it to spin in place, the robot has no way of correcting for that. Additionally, there is no way to change the speed without manually recalculating the correct time intervals. A future improvement would be to make the speed and time variable so that you could change one and automatically calculate the other. 
@@ -32,7 +32,7 @@ The drive_square.py file contains a DriveSquareNode class which houses the logic
 ### Description
 The purpose of this behavior is to have the Neato drive in a straight line while maintaining a constant distance from a wall. 
 
-https://user-images.githubusercontent.com/86380596/191907693-d2825eb1-d5dd-496a-a0e8-35d0eb69be6c.mp4
+[Wall Follower Video](https://www.youtube.com/watch?v=WYpiDgwRKMs&list=PLevadX1p2DCKCYBexXZQfXzgTRgTTkuP5&index=2)
 
 ### Strategy 
 First, we used the built in lidar sensor to find the distance from the right and left side (90 and 270 degrees) of the robot to the wall. Then, we compared the distances to find the closer wall. This is the wall that we will follow. Then, based on which wall we were following, we found the distance to the wall 45 degrees ahead and behind the robot. If the robot is parallel to the wall, these distances will be equal. If the distances are not equal, the robot is not parallel and can self correct using the difference between the two distances. This difference is used as the error in a proportional control system to change the robot's angular velocity. The larger the difference, the faster the robot will turn to orient itself parallel to the wall. The robot drives at a constant linear speed and only changes angular velocity. 
@@ -52,7 +52,7 @@ The wall_follower.py file contains a WallFollowerNode class which houses the log
 ### Description
 For person following, our robot identified a “person” in an empty space and then drove towards the person.
 
-https://user-images.githubusercontent.com/86380596/191907636-2dbf37b8-77f4-442b-9a43-55b07adfc4be.mp4
+[Person Follower Video](https://www.youtube.com/watch?v=UO3H5v-8xWA&list=PLevadX1p2DCKCYBexXZQfXzgTRgTTkuP5&index=3)
 
 ### Strategy
 For this behavior, we assume that the robot is in an empty space aside from the target. That means there are no nearby walls or obstacles. First, we take the entire LIDAR scan and filter it to remove all points outside a given radius. We used a radius of .75 meters, determined to be the most reliable for the robot to still be able to find the person but not become confused with walls and obstacles in testing. Then, we found the mean of the points present in the filtered data. This assumes that all points come from the same target, so it is not robust to multiple targets. After finding the mean of the data, or the centroid of the target, we calculated the angle between the target and the robots current heading. Then, the robot turns toward the person and drives toward them at a constant speed. One primary limitation of this strategy is that the robot can not handle multiple targets. If there are multiple targets, it will still try to find the mean of the targets and end up with a point in between. 
@@ -68,7 +68,7 @@ The person_follower.py file contains a PersonFollowerNode class which houses the
 ### Description
 Our goal was to have the robot drive in a straight line while avoiding obstacles placed in its way. 
 
-https://user-images.githubusercontent.com/86380596/191907565-7591b894-b06c-45f6-bd63-cb8e4b54d75e.mp4
+[Obstacle Avoider Video](https://www.youtube.com/watch?v=lRZg_B5taa0&list=PLevadX1p2DCKCYBexXZQfXzgTRgTTkuP5&index=4)
 
 ### Strategy
 For this behavior, we restricted the LIDAR scan to just 180 degrees at the front of the robot. This means it is unable to see behind itself.  We want the robot to drive in a straight line but also avoid any obstacles it sees. To do this we created a curve representing the desired heading. For our purposes, we created a normal curve spanning -90 to 90 degrees with a peak at 0 degrees (representing straight ahead). The height of each point corresponded to how desired that heading was: straight ahead was most desired and either side was least desired.  Then, we processed the LIDAR data in a similar way. We created a vector with all the points where values farther away were higher and therefore more desired and values closer were lower and therefore less desired. We applied a moving average filter to the scans to smooth out sharp changes in distance, so that the robot would favor the center of gaps rather than directly next to an obstacle. Then we used elementwise addition to add the two arrays and come up with a final array representing the desirability of each direction. The maximum of this array is then chosen as the desired heading. 
@@ -86,7 +86,7 @@ The obstacle_avoider.py file contains a ObstacleAvoiderNode class which houses t
 ### Description
 Our finite state machine switched between two behaviors, our person-following behavior and a new spin dance behavior. 
 
-https://user-images.githubusercontent.com/86380596/191907441-56763522-a6b9-4c72-9142-1ffe2c6174dd.mp4
+[Finite State Controller Video](https://www.youtube.com/watch?v=LlDmVCSFOuQ&list=PLevadX1p2DCKCYBexXZQfXzgTRgTTkuP5&index=5)
 
 ### Strategy
 The robot begins in the default person following behavior where it locates a person and drives towards them. When the robot reaches the person and triggers its bump sensor, it switches to its second state. In the second state, the robot reverses slightly to clear the person and then spins rapidly. The robot remains in this state until its bump sensor is triggered again and then it switches back to its first state where it person-follows. 
