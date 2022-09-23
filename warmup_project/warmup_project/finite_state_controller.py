@@ -66,23 +66,22 @@ class StateMachineNode(Node):
         """
         Publish linear and angular velocities to robot
         """
-        print(self.state)
-        print(f'{self.collision=}')
         if self.state == State.PERSON_FOLLOW:
             self.person_follow()
         elif self.state == State.SPIN:
             self.spin()
-            print(f'{self.counter=}')
 
     def person_follow(self):
+        move_msg = Twist()
         if self.last_state == State.SPIN:
+            move_msg.linear.x = -0.2
+            move_msg.angular.x = 0.0
             self.collision = False
             self.last_state = State.PERSON_FOLLOW
+            self.publisher.publish(move_msg)  
         elif self.collision:
             self.state = State.SPIN
         else:
-            move_msg = Twist()
-
             # Turn without moving forward until the person is in front of the robot
             if abs(self.error) > 0.5:
                 move_msg.linear.x = 0.0
@@ -94,14 +93,17 @@ class StateMachineNode(Node):
             self.publisher.publish(move_msg)   
 
     def spin(self):
+        move_msg = Twist()
         if self.last_state == State.PERSON_FOLLOW:
             self.collision = False
             self.counter = 0
             self.last_state = State.SPIN
+            move_msg.linear.x = -0.3
+            move_msg.angular.z = 0.0
+            self.publisher.publish(move_msg)
         elif self.collision:
             self.state = State.PERSON_FOLLOW
         else:
-            move_msg = Twist()
             if self.counter < 10:
                 move_msg.linear.x = -0.3
                 move_msg.angular.z = 0.0

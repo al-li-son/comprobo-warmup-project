@@ -33,7 +33,7 @@ class ObstacleAvoiderNode(Node):
 
         # Make Kp adjustable through ROS args
         self.declare_parameters(namespace='',
-        parameters=[('Kp', 0.1)])
+        parameters=[('Kp', 0.05)])
         self.Kp = self.get_parameter('Kp').value
         # the following line is only need to support dynamic_reconfigure
         self.add_on_set_parameters_callback(self.parameter_callback)
@@ -89,9 +89,7 @@ class ObstacleAvoiderNode(Node):
         scans_cropped = np.concatenate((np.flip(scans[0:91]), np.flip(scans[270:360])))
         # Scale data by dividing by max
         scans_max = np.nanmax(scans_cropped)
-        print(f"{scans_max=}")
         scans_normalized= [val/scans_max if not np.isnan(val) else 1.0 for val in scans_cropped]
-        print(f"{scans_normalized}")
         scans_normalized = np.concatenate(([scans_normalized[0], scans_normalized[0]], scans_normalized, [scans_normalized[-1], scans_normalized[-1]]))
         scans_smoothed = []
         for i in range(2, len(scans_normalized)-2):

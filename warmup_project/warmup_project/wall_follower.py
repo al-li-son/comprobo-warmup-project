@@ -9,6 +9,7 @@ from geometry_msgs.msg import Twist
 from statistics import mean
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
+from visualization_msgs.msg import Marker
 
 class WallFollowerNode(Node):
     def __init__(self):
@@ -16,6 +17,12 @@ class WallFollowerNode(Node):
 
         self.wall_error = 0
         self.collision = False
+        self.right_front_mean = 0
+        self.right_back_mean = 0
+        self.left_front_mean = 0
+        self.left_back_mean = 0
+        self.right_mean = 0
+        self.left_mean = 0
 
         # Call drive_msg every 0.1s
         timer_period = 0.1
@@ -23,6 +30,7 @@ class WallFollowerNode(Node):
 
         # Create publishers/subscribers
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.vis_pub = self.create_publisher(Marker, 'marker', 10)
         self.subscriber = self.create_subscription(LaserScan, 'scan', self.get_wall_error, 10)
         self.bump_subscriber = self.create_subscription(Bump, 'bump', self.hit_obstacle, 10)
 
@@ -68,6 +76,48 @@ class WallFollowerNode(Node):
         # Publish to cmd_vel topic
         self.publisher.publish(msg)
 
+        # Create a markers in rviz to visualize wall following (3 points, front, center, & back)
+        markers = [Marker(), Marker(), Marker()]
+        for marker in markers:
+            marker.header.frame_id = "base_link"
+            marker.header.stamp = self.get_clock().now().to_msg()
+            marker.ns = "my_namespace"
+            marker.id = 0
+
+            marker.type = Marker.SPHERE
+            marker.action = Marker.ADD
+            marker.pose.position.z = 0.0
+            marker.pose.orientation.x = 0.0
+            marker.pose.orientation.y = 0.0
+            marker.pose.orientation.z = 0.0
+            marker.pose.orientation.w = 1.0
+            marker.scale.x = 0.1
+            marker.scale.y = 0.1
+            marker.scale.z = 0.1
+            marker.color.a = 1.0 # Don't forget to set the alpha!
+            marker.color.r = 0.0
+            marker.color.g = 1.0
+            marker.color.b = 0.0
+
+        if self.right_mean < self.left_mean:
+            markers[0].pose.position.x = 0.0
+            markers[0].pose.position.y = - float(self.right_mean)
+            markers[1].pose.position.x = 1/np.sqrt(2) * self.right_front_mean
+            markers[1].pose.position.y = - 1/np.sqrt(2) * self.right_front_mean
+            markers[2].pose.position.x = - 1/np.sqrt(2) * self.right_back_mean
+            markers[2].pose.position.y = - 1/np.sqrt(2) * self.right_back_mean
+        else:
+            markers[0].pose.position.x = 0.0
+            markers[0].pose.position.y = float(self.left_mean)
+            markers[1].pose.position.x = 1/np.sqrt(2) * self.left_front_mean
+            markers[1].pose.position.y = 1/np.sqrt(2) * self.left_front_mean
+            markers[2].pose.position.x = - 1/np.sqrt(2) * self.left_back_mean
+            markers[2].pose.position.y = 1/np.sqrt(2) * self.left_back_mean          
+        
+        self.vis_pub.publish(markers[0])
+        self.vis_pub.publish(markers[1])
+        self.vis_pub.publish(markers[2])
+
     def get_wall_error(self, msg):
         """
         Callback function for subscription to laser scan data
@@ -84,18 +134,17 @@ class WallFollowerNode(Node):
         left = [val for val in scans[85:95] if val != 0]
 
         # Takes mean of points, ignoring 0s (dropped scan points)
-        right_front_mean = mean(right_front) if len(right_front) > 0 else 10
-        right_back_mean = mean(right_back) if len(right_back) > 0 else 10
-        left_front_mean = mean(left_front) if len(left_front) > 0 else 10
-        left_back_mean = mean(left_back) if len(left_back) > 0 else 10
-        right_mean = mean(right) if len(right) > 0 else 10
-        left_mean = mean(left) if len(left) > 0 else 10
+        self.right_front_mean = mean(right_front) if len(right_front) > 0 else 10
+        self.right_back_mean = mean(right_back) if len(right_back) > 0 else 10
+        self.left_front_mean = mean(left_front) if len(left_front) > 0 else 10
+        self.left_back_mean = mean(left_back) if len(left_back) > 0 else 10
+        self.right_mean = mean(right) if len(right) > 0 else 10
+        self.left_mean = mean(left) if len(left) > 0 else 10
 
         # Calculates difference between front and back (parallelism)
         # Chooses to follow left or right wall based on closest wall
-        self.wall_error = right_back_mean - right_front_mean if right_mean < left_mean else left_front_mean - left_back_mean
-
-        print(f"{right_front_mean=}\n{right_back_mean=}\n{left_front_mean=}\n{left_back_mean=}")
+        self.wall_error = self.right_back_mean - self.right_front_mean \
+            if self.right_mean < self.left_mean else self.left_front_mean - self.left_back_mean
 
 def main(args=None):
     rclpy.init(args=args)
