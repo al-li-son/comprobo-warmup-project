@@ -37,14 +37,14 @@ https://user-images.githubusercontent.com/86380596/191907693-d2825eb1-d5dd-496a-
 ### Strategy 
 First, we used the built in lidar sensor to find the distance from the right and left side of the robot to the wall. Then, we compared the distances to find the closer wall. This is the wall that we will follow. Then, based on which wall we were following, we found the distance to the wall 45 degrees ahead and behind the robot. If the robot is parallel to the wall, these distances will be equal. If the distances are not equal, the robot is not parallel and can self correct using the difference between the two distances. The robot drives at a constant speed while correcting its angle to stay parallel to the wall. 
 
-<img width="362" alt="picture 1" src="https://user-images.githubusercontent.com/86380596/191909027-db3600ad-0b0f-42cc-8ca1-ecba62295935.PNG">
+![Wall following diagram 1](./media/wall_follow_diagram_1.png)
 
-Figure 1. Measurements from the Neato LiDAR sensor used for wall following. For each measurement, a 20 degree range (± 10 degrees) of data points was recorded for redundancy, filtered to remove dropped scans (0s), and averaged.
+**Figure 1.** Measurements from the Neato LiDAR sensor used for wall following. For each measurement, a 20 degree range (± 10 degrees) of data points was recorded for redundancy, filtered to remove dropped scans (0s), and averaged.
 
 <img width="393" alt="picture 2" src="https://user-images.githubusercontent.com/86380596/191909230-9f08ae24-f7a5-459e-bc5b-f47200d818e8.PNG">
 
 
-Figure 2. Wall following logic diagram. The robot chooses which wall to follow based on whether a directly left or right scan is closest, then compares the front and back measurements to determine which direction to turn to orient itself parallel to the wall.
+**Figure 2.** Wall following logic diagram. The robot chooses which wall to follow based on whether a directly left or right scan is closest, then compares the front and back measurements to determine which direction to turn to orient itself parallel to the wall.
 ### Code Structure
 The wall_follower.py file contains a WallFollowerNode class which houses the logic for the wall following behavior. The WallFollowerNode has a publisher that publishes to the /cmd_vel topic to control the movement of the robot and a subscriber that subscribes to the /scan topic to retrieve the distance data from the lidar sensor. We also incorporated a parameter to allow the user to change the value of the proportional controller from the command line. This value affects the speed at which the robot turns to self-correct when it is not parallel to the wall. Finally, we also incorporated a marker to visualize the position of the wall in rvis. 
 
@@ -59,7 +59,7 @@ For this behavior, we assume that the robot is an empty space aside from the tar
 
 <img width="269" alt="picture 3" src="https://user-images.githubusercontent.com/86380596/191909569-46025231-ca59-44f4-ba12-bad20dc64449.PNG">
 
-Figure 3. Person following logic diagram. The robot only considers points within a 0.75m radius. It then finds the mean point, or centroid, of all points within range, determines the angle between the robot’s current heading and the centroid, and turns to follow accordingly.
+**Figure 3.** Person following logic diagram. The robot only considers points within a 0.75m radius. It then finds the mean point, or centroid, of all points within range, determines the angle between the robot’s current heading and the centroid, and turns to follow accordingly.
 ### Code Structure
 The person_follower.py file contains a PersonFollowerNode class which houses the logic for the person following behavior. The PersonFollowerNode has a publisher that publishes to the /cmd_vel topic to control the movement of the robot and a subscriber that subscribes to the /scan topic to retrieve the distance data from the lidar sensor. We also incorporated a parameter to allow the user to change the value of the proportional controller from the command line. This value affects the speed at which the robot turns towards the person. Finally, we also incorporated a marker to visualize the position of the person in rvis. This marker was especially helpful at visualizing when the robot picked up multiple targets.
 
@@ -75,7 +75,7 @@ For this behavior, we restricted the LIDAR scan to just 180 degrees at the front
 
 <img width="468" alt="picture 4" src="https://user-images.githubusercontent.com/86380596/191909804-8a3e85d0-edf2-4f50-a3cf-d3f0ed809979.PNG">
 
-Figure 4. Obstacle avoiding example situation and logic. Since large scan values indicate objects further away, a 180° LiDAR scan range (-90° and 90° from the forward heading of the robot) is added to a normal curve and the maximum is taken as the desired angle that the robot should turn towards. Using the normal curve causes the robot to favor moving directly forwards when scans are large in multiple directions. To center the robot within gaps between obstacles, a moving average filter is applied over the scan data to smooth sharp edges.
+**Figure 4.** Obstacle avoiding example situation and logic. Since large scan values indicate objects further away, a 180° LiDAR scan range (-90° and 90° from the forward heading of the robot) is added to a normal curve and the maximum is taken as the desired angle that the robot should turn towards. Using the normal curve causes the robot to favor moving directly forwards when scans are large in multiple directions. To center the robot within gaps between obstacles, a moving average filter is applied over the scan data to smooth sharp edges.
 ### Code Structure
 The obstacle_avoider.py file contains a ObstacleAvoiderNode class which houses the logic for the obstacle avoidance behavior. The ObstacleAvoiderNode has a publisher that publishes to the /cmd_vel topic to control the movement of the robot and a subscriber that subscribes to the /scan topic to retrieve the distance data from the lidar sensor. We also incorporated a parameter to allow the user to change the value of the proportional controller from the command line. This value affects the speed at which the robot turns towards the person. Finally, we also incorporated a marker to visualize the position of the person in rvis. We decided not to implement a marker with this behavior. 
 
@@ -91,7 +91,7 @@ The robot begins in the default person following behavior where it locates a per
 
 <img width="428" alt="picture 5" src="https://user-images.githubusercontent.com/86380596/191910014-582a4d81-6842-49a5-9a48-b34ad9b7f645.PNG">
 
-Figure 5. Finite state diagram for a Neato controller. The Neato will default to person following behavior, but when a bump sensor is activated it will reverse and spin around until a bump sensor is activated again, at which point it will return to person following behavior.
+**Figure 5.** Finite state diagram for a Neato controller. The Neato will default to person following behavior, but when a bump sensor is activated it will reverse and spin around until a bump sensor is activated again, at which point it will return to person following behavior.
 ### Code Structure
 The finite_state_controller.py file contains both a State class which in an enum that contains the names of states and a StateMachineNode class which houses the logic for the finite state machine. The code switches the same person-following code as earlier and code commanding the robot to reverse slightly and spin.
 
